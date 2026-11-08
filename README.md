@@ -18,9 +18,7 @@ A static web app: GitHub Pages serves it, Supabase stores your progress and hand
 ## Setup
 
 ### 1. Supabase project
-1. Create a project at supabase.com. The free tier is enough.
-2. Open **SQL Editor**, paste in `supabase/schema.sql` and run it.
-3. Open **Project Settings > API**. Copy the **Project URL** and the **anon public** key into `config.js`.
+Done: project **MCE (Main Character Energy)**, `docs` table created from `supabase/schema.sql`, and `config.js` filled in.
 
 The anon key is meant to be public. Row-level security in the schema means each signed-in person can only read and write their own rows.
 
@@ -39,7 +37,7 @@ The anon key is meant to be public. Row-level security in the schema means each 
 In the old version, or from the export file, use **Paths > Account > Import data**. Importing merges entries and never duplicates one.
 
 ## Install on your phone
-Open the Pages address in Safari (iPhone) or Chrome (Android) and choose **Add to Home Screen**. It opens full screen like an app.
+Open https://conthescribe.github.io/homebase/ in Safari (iPhone) or Chrome (Android) and choose **Add to Home Screen**. It opens full screen like an app.
 
 ## Updating
 Edit, commit and push; Pages redeploys automatically. After changing artwork, bump `CACHE` in `sw.js` (for example `homebase-v2`) so phones fetch the new files.
