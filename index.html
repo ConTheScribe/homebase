@@ -227,6 +227,41 @@ select.in option{color:#111}
 @keyframes smoulder{50%{opacity:.5}}
 @keyframes flicker{50%{transform:scale(1.12)}}
 .fx.fire{width:16%;background:radial-gradient(circle,rgba(255,190,90,.55),rgba(255,170,70,0) 70%);animation-duration:.9s}
+
+/* room keepers */
+#npcFab{position:absolute;z-index:6;left:max(16px,env(safe-area-inset-left,0px));display:flex;align-items:center;gap:9px;padding:4px 16px 4px 4px;border-radius:999px;background:rgba(13,32,29,.86);border:1px solid var(--line);color:var(--cream);font:600 15px var(--font-ui);cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.35);transition:opacity .4s,transform .4s}
+#npcFab.off{opacity:0;pointer-events:none;transform:translateY(20px)}
+#npcFab .face{width:46px;height:46px;border-radius:50%;background-size:270%;background-repeat:no-repeat;border:2px solid rgba(255,233,200,.75);flex:0 0 auto}
+#npcFab .dot{position:absolute;left:38px;top:4px;width:12px;height:12px;border-radius:50%;background:#ffd96b;border:2px solid #10261f;animation:dotPulse 2.4s ease-in-out infinite}
+@keyframes dotPulse{50%{transform:scale(1.25)}}
+#talk{position:absolute;inset:0;z-index:9;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+#talk .tScrim{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(8,18,16,.2),rgba(8,18,16,.6) 45%,rgba(8,18,16,.94));animation:fadeIn .5s ease}
+.tPortrait{position:absolute;left:50%;top:max(40px,env(safe-area-inset-top,0px));width:min(94%,560px,62dvh);aspect-ratio:1;object-fit:cover;translate:-50% 0;
+  -webkit-mask-image:radial-gradient(ellipse 50% 50% at 50% 46%,#000 58%,transparent 100%);mask-image:radial-gradient(ellipse 50% 50% at 50% 46%,#000 58%,transparent 100%);
+  animation:tIn .7s cubic-bezier(.2,.8,.2,1),breathe 7s ease-in-out .7s infinite alternate;transform-origin:50% 90%;transition:opacity .5s,filter .5s}
+@keyframes tIn{from{opacity:0;transform:translateY(24px) scale(.97)}}
+@keyframes breathe{to{transform:scale(1.018) translateY(-3px)}}
+@keyframes fadeIn{from{opacity:0}}
+.tBox{position:relative;width:min(100% - 24px,640px);margin-bottom:max(12px,env(safe-area-inset-bottom,0px));background:var(--glass);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:20px;padding:16px 18px 18px;display:flex;flex-direction:column;gap:12px;max-height:52%;animation:tIn .5s cubic-bezier(.2,.8,.2,1) .1s both}
+.tName{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tName b{font-family:var(--font-display);font-weight:400;font-size:26px;line-height:1;color:#fff6e6}
+.tName small{color:var(--mist);font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+.tBody{font-size:17px;line-height:1.55;overflow:auto;min-height:3.1em;color:var(--cream);cursor:pointer}
+.tChoices{display:flex;flex-direction:column;gap:8px}
+.tChoices button{display:flex;align-items:center;gap:10px;text-align:left;padding:12px 14px;border-radius:12px;background:rgba(251,242,226,.06);border:1px solid var(--line);color:var(--cream);font:500 15px var(--font-ui);cursor:pointer}
+.tChoices button:hover{background:rgba(251,242,226,.12)}
+.tChoices button .k{margin-left:auto;color:var(--mist);font-size:13px}
+.tChoices button.pri{background:var(--ember);border:2px dashed rgba(255,226,200,.7);color:#fff6ea;font-weight:700;justify-content:center}
+.tChoices .new{color:#ffd96b}
+#talk.reading .tPortrait{opacity:.18;filter:blur(2px)}
+#talk.reading .tBox{max-height:calc(100% - 70px - env(safe-area-inset-top,0px))}
+#talk.reading .tBody{cursor:auto;font-size:16.5px}
+.lesson h3{font-family:var(--font-display);font-weight:400;font-size:28px;line-height:1.1;margin:0 0 4px;color:#fff6e6;text-wrap:balance}
+.lesson .meta{color:var(--mist);font-size:13px;margin:0 0 14px}
+.lesson p{margin:0 0 12px;max-width:62ch}
+.lesson .ask{margin:16px 0 4px;padding:12px 14px;border-left:3px solid #ffd96b;background:rgba(255,217,107,.08);border-radius:0 10px 10px 0}
+.lesson .ask small{display:block;color:#ffd96b;font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px}
+@media (prefers-reduced-motion:reduce){.tPortrait,.tBox,#talk .tScrim{animation:none}#npcFab .dot{animation:none}}
 @media (prefers-reduced-motion:reduce){.flame{animation:none!important}.kb{animation:none}.ember,.smoke{display:none}#veil{display:none}#roomArt.on .roomFrame{animation:none}.fx{animation:none;opacity:.7}.fx.page{display:none}.layer-ui,#sheet,#logFab{transition:none}#modal .panel{animation:none}}
 </style>
 <style>body{margin:0}#stage{padding-top:0}</style>
@@ -258,6 +293,7 @@ select.in option{color:#111}
   <div id="saveNote" hidden><span id="saveNoteText"></span></div>
 
   <button id="logFab" class="off" type="button">+ Log</button>
+  <button id="npcFab" class="off" type="button"><span class="face"></span><span class="nm"></span><span class="dot" hidden></span></button>
   <section id="sheet" class="off" aria-label="Homebase">
     <button class="grab" id="sheetToggle" type="button" aria-expanded="false" aria-label="Open homebase"><span></span></button>
     <div id="sheetHead"></div>
@@ -272,12 +308,14 @@ select.in option{color:#111}
   <div id="homeArt"></div>
   <div id="roomArt" aria-hidden="true"></div>
   <div id="arrive" aria-live="polite"><small id="arriveSub"></small><b id="arriveName"></b></div>
+  <div id="talk" hidden role="dialog" aria-modal="true" aria-labelledby="talkName"><div class="tScrim" data-act="tbye"></div><img class="tPortrait" alt=""><div class="tBox"><div class="tName"><b id="talkName"></b><small id="talkTitle"></small></div><div class="tBody" id="talkBody" aria-live="polite"></div><div class="tChoices" id="talkChoices"></div></div></div>
   <div id="modal" hidden><div class="scrim" data-act="close"></div><div class="panel" role="dialog" aria-modal="true" id="panel"></div></div>
   <div id="veil" aria-hidden="true"><div class="puff" style="--y:-10%;--s:150%;--m:-30%;--d:0s"></div><div class="puff" style="--y:4%;--s:140%;--m:0%;--d:0.06s"></div><div class="puff" style="--y:18%;--s:160%;--m:-35%;--d:0.1s"></div><div class="puff" style="--y:32%;--s:150%;--m:-5%;--d:0.03s"></div><div class="puff" style="--y:46%;--s:165%;--m:-40%;--d:0.08s"></div><div class="puff" style="--y:60%;--s:150%;--m:-10%;--d:0.12s"></div><div class="puff" style="--y:74%;--s:160%;--m:-35%;--d:0.05s"></div><div class="puff" style="--y:88%;--s:150%;--m:-5%;--d:0.1s"></div><div class="puff" style="--y:25%;--s:120%;--m:30%;--d:0.15s"></div><div class="puff" style="--y:66%;--s:125%;--m:25%;--d:0.07s"></div></div>
   <div id="toast" class="layer-ui is-hidden"><span class="glass" id="toastBox"><span id="toastText"></span><button id="toastUndo" type="button" hidden>Undo</button></span></div>
 </div>
 
 <script src="config.js"></script>
+<script src="content.js"></script>
 <script src="vendor/supabase.js"></script>
 <script>
 (()=>{
@@ -699,9 +737,9 @@ function log(h,extra={}){
   checkFire();
   return e;
 }
-function removeEntry(e){const w=weekOf(parseD(e.d));store.write(w.id,{entries:weekEntries(w.id).filter(x=>x.id!==e.id)});toast('Entry removed',null);}
+function removeEntry(e){if(e.lesson&&S.profile.lessons?.[e.lesson])saveProfile(p=>{delete p.lessons[e.lesson];});const w=weekOf(parseD(e.d));store.write(w.id,{entries:weekEntries(w.id).filter(x=>x.id!==e.id)});toast('Entry removed',null);}
 function saveProfile(mut){const p=JSON.parse(JSON.stringify(S.profile));mut(p);store.write('profile',p);}
-function entryText(e){const h=habit(e.h);let s=h?h.label:'Removed habit';
+function entryText(e){if(e.h==='lesson'){const l=findLesson(e.lesson);return 'Lesson · '+(l?l.t:'read');}const h=habit(e.h);let s=h?h.label:'Removed habit';
   if(e.amt)s+=` · ${money(e.amt)}`;if(e.cat)s+=` · ${e.cat}`;
   if(e.q&&h?.unit)s+=` · ${e.q} ${h.unit==='min'?'min':h.unit}`;
   if(e.person){const pp=S.profile.people.find(x=>x.id===e.person);if(pp)s+=` · ${pp.name}`;}
@@ -785,6 +823,7 @@ function renderLocation(){
       const pg=art.pages?[...Array(7)].map((_,i)=>`<span class="fx page" style="left:${art.pages[0]*100}%;top:${art.pages[1]*100}%;--dx:${80+i*35}px;--dy:${-20+((i*53)%90)}px;--r:${(i%2?1:-1)*(200+i*40)}deg;animation-delay:-${i*1.3}s"></span>`).join(''):'';
       ra.innerHTML=`<div class="kb" style="--x0:${art.kb[0]};--x1:${art.kb[1]};--s0:${art.kb[2]};--s1:${art.kb[3]};--ox:${art.o[0]*100}%;--oy:${art.o[1]*100}%"><img src="${art.src}" alt="">${fx}${lan}${pg}</div>`;}
     ra.classList.add('on');}else ra.classList.remove('on');
+  syncNpc();
 }
 function makePuffs(){
   const mk=seed=>{let s=seed;const r=()=>{s=(s*16807)%2147483647;return (s-1)/2147483646;};
@@ -806,7 +845,7 @@ makePuffs();
 let traveling=false,arriveT=0;
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 function travel(to){
-  if(traveling)return;closeAll();setOpen(false);if(to===S.loc)return;
+  if(traveling)return;closeTalk();closeAll();setOpen(false);if(to===S.loc)return;
   const arrive=()=>{S.loc=to;$('sheetBody').scrollTop=0;renderLocation();renderAll();
     const a=$('arrive');if(to==='home'){a.classList.remove('on');return;}
     $('arriveSub').textContent=PMAP[to].name;$('arriveName').textContent=PMAP[to].place;a.classList.add('on');clearTimeout(arriveT);arriveT=setTimeout(()=>a.classList.remove('on'),2200);};
@@ -815,7 +854,7 @@ function travel(to){
   setTimeout(()=>{arrive();v.className='out';setTimeout(()=>{v.className='';traveling=false;},1150);},950);
 }
 function setOpen(v){S.open=v;$('sheet').classList.toggle('open',v);$('sheetToggle').setAttribute('aria-expanded',String(v));const nm=S.loc==='home'?'homebase':PMAP[S.loc].name;$('sheetToggle').setAttribute('aria-label',v?`Close ${nm}`:`Open ${nm}`);if(v)renderSheet();placeFab();}
-function placeFab(){const sh=$('sheet');requestAnimationFrame(()=>{const h=S.open?0:sh.getBoundingClientRect().height;$('logFab').style.bottom=S.open?'max(16px, env(safe-area-inset-bottom, 0px))':(h+12)+'px';});}
+function placeFab(){const sh=$('sheet');requestAnimationFrame(()=>{const h=S.open?0:sh.getBoundingClientRect().height;const b=S.open?'max(16px, env(safe-area-inset-bottom, 0px))':(h+12)+'px';$('logFab').style.bottom=b;$('npcFab').style.bottom=b;});}
 
 /* =================== modal panels =================== */
 const VIEWS={};
@@ -1035,6 +1074,7 @@ VIEWS.door=()=>{const st=stats();const t=tLvl(st.total);const si=stageFor(t.lv);
 
 /* =================== events =================== */
 function onAct(el){const a=el.dataset.act;
+  if(a&&a[0]==='t'&&TALK_ACTS[a])return TALK_ACTS[a](el);
   if(a==='close')return closeAll();if(a==='back')return back();
   if(a==='room')return travel(el.dataset.p);
   if(a==='home')return travel('home');
@@ -1078,7 +1118,7 @@ if(['capForm','personForm','bookForm'].includes(f.id)&&document.activeElement)do
   if(f.id==='personForm'){ev.preventDefault();const n=$('personIn').value.trim();if(!n)return;saveProfile(p=>p.people.push({id:uid(),name:n}));}
   if(f.id==='bookForm'){ev.preventDefault();const t=$('bookTitle').value.trim();if(!t)return;const pg=parseInt($('bookPages').value)||0;saveProfile(p=>p.books.push({id:uid(),title:t,pages:pg}));}
 });
-document.addEventListener('keydown',ev=>{if(ev.key!=='Escape')return;if(S.stack.length){ev.preventDefault();back();}else if(S.open){setOpen(false);}else if(S.loc!=='home'){travel('home');}});
+document.addEventListener('keydown',ev=>{if(ev.key!=='Escape')return;if(!$('talk').hidden){ev.preventDefault();talkBack();return;}if(S.stack.length){ev.preventDefault();back();}else if(S.open){setOpen(false);}else if(S.loc!=='home'){travel('home');}});
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{S.tab=b.dataset.tab;renderSheet();$('sheetBody').scrollTop=0;}));
 $('sheetToggle').addEventListener('click',()=>setOpen(!S.open));
 $('logFab').addEventListener('click',()=>S.loc==='home'?openView('log'):openView('logpath',S.loc));
@@ -1086,9 +1126,82 @@ $('stageTag').addEventListener('click',()=>S.loc==='home'?openView('door'):trave
 
 function renderAll(){if(!S.profile)return;if(!S.profile.habits.some(h=>h.id==='invest')&&!S.migrating){S.migrating=true;saveProfile(p=>{if(!p.habits.some(h=>h.id==='invest'))p.habits.push({id:'invest',p:'wealth',label:'Invest',xp:25,kind:'invest'});});S.migrating=false;return;}renderSheet();renderLocation();refreshModal();placeFab();}
 
+
+/* =================== room keepers =================== */
+const MC=window.MCE_CONTENT||{npc:{},lessons:{}};
+const T={pid:null,typing:0,full:''};
+const pickOne=a=>a[Math.floor(Math.random()*a.length)];
+function findLesson(id){for(const k in MC.lessons){const l=MC.lessons[k].find(x=>x.id===id);if(l)return l;}return null;}
+function lessonState(pid){const read=S.profile?.lessons||{};const list=MC.lessons[pid]||[];const t=today();
+  return{list,read,doneToday:list.some(l=>read[l.id]===t),next:list.find(l=>!read[l.id]),past:list.filter(l=>read[l.id])};}
+function faceStyle(pid){const n=MC.npc[pid];const S_=2.7;const [fx,fy]=n.face.map(v=>v/100);const p=v=>((v*S_-.5)/(S_-1)*100).toFixed(1)+'%';
+  return`background-image:url(assets/npc-${pid}.webp);background-position:${p(fx)} ${p(fy)}`;}
+function syncNpc(){const f=$('npcFab');const pid=S.loc;const n=pid&&pid!=='home'&&MC.npc[pid];
+  if(!n||S.shown===false||!S.profile){f.classList.add('off');return;}
+  f.querySelector('.face').setAttribute('style',faceStyle(pid));f.querySelector('.nm').textContent=n.name.replace(/^The /,'');
+  const ls=lessonState(pid);f.querySelector('.dot').hidden=!(ls.next&&!ls.doneToday);
+  f.setAttribute('aria-label',`Speak with ${n.name}${ls.next&&!ls.doneToday?', new lesson waiting':''}`);f.classList.remove('off');}
+function daysAgo(d){return Math.round((parseD(today())-parseD(d))/864e5);}
+function npcInsight(pid){const st=stats();const n=MC.npc[pid];const mine=st.all.filter(e=>e.p===pid);const last=mine[0];
+  const lv=lvl(st.byPath[pid].xp).lv;const wk=st.byPath[pid].week;const sk=pathStreak(mine);const t=today();
+  const gap=last?daysAgo(last.d):null;
+  let a='';
+  if(pid==='wealth'){const pr=objProgress({h:'cap'},st.w.id);const goals=S.profile.goals||[];
+    a=pr.cap?(pr.spent<=pr.cap?`You have spent ${money(pr.spent)} of your ${money(pr.cap)} this week. The scales still favour you.`:`You are ${money(pr.spent-pr.cap)} past your ${money(pr.cap)} cap this week. It happens. Tighten the purse for the days left.`):'';
+    if(goals.length){const g=goals[0];const f=g.target?Math.min(1,goalSaved(g,st.all)/g.target):0;a+=` Your ${esc(g.name)} fund stands at ${Math.round(f*100)}%.`;}}
+  else if(pid==='discipline'){const hs=S.profile.habits.filter(h=>h.p==='discipline'&&h.daily);const done=hs.filter(h=>st.all.some(e=>e.h===h.id&&e.d===t));
+    a=hs.length?(done.length===hs.length?'Every rite kept today. The stone notices.':`${done.length} of ${hs.length} daily rites kept today. ${hs.filter(h=>!done.includes(h)).map(h=>h.label).slice(0,2).join(', ')} still wait.`):'';}
+  else if(pid==='vitality'){a=wk?`You moved ${wk} time${wk>1?'s':''} this week.`:'You have not moved with me this week yet. A walk would do.';
+    const mins=st.all.filter(e=>e.p==='vitality'&&e.d>=dstr(st.w.mon)&&habit(e.h)?.unit==='min').reduce((s,e)=>s+(+e.q||0),0);if(mins)a+=` ${mins} logged minutes. The aim is 150 a week.`;}
+  else if(pid==='bonds'){const ppl=S.profile.people||[];
+    if(ppl.length){const ages=ppl.map(p=>{const e=st.all.find(e=>e.person===p.id);return{p,g:e?daysAgo(e.d):999};}).sort((x,y)=>y.g-x.g);const o=ages[0];
+      a=o.g>=14?`${esc(o.p.name)}'s lantern is burning low${o.g<999?`. It has been ${o.g} days`:', it has never been lit'}. Maybe today?`:'Every lantern on the bridges is lit. That is rare. Well done.';}
+    else a='No lanterns hang here yet. Add the people who matter in the Lanterns tab.';}
+  else if(pid==='craft'){a=wk?`${wk} session${wk>1?'s':''} at the bench this week.`:'The bench has been quiet this week. Ten minutes is enough to wake it.';}
+  else if(pid==='lore'){const bs=(S.profile.books||[]);const cur=bs.find(b=>!b.pages||(b.read||0)<b.pages);const ls=lessonState('lore');
+    a=cur?`You are reading ${esc(cur.title)}. Pip approves.`:'No book on your shelf yet. Add one in the Bookshelf tab.';if(ls.past.length)a+=` You have read ${ls.past.length} of my pages.`;}
+  const g=gap===null?'We have not met properly yet. Log something here and I will remember.':gap===0?(sk>1?`You are ${sk} days running on this path.`:'You were here today already.'):gap===1?'You were here yesterday.':`It has been ${gap} days since you last came this way.`;
+  return `${g} ${a} This path is at level ${lv}.`.replace(/\s+/g,' ').trim();}
+function talkSay(text,choices){clearInterval(T.typing);const b=$('talkBody');T.full=text;$('talk').classList.remove('reading');
+  if(reduceMotion){b.textContent=text;}else{let i=0;b.textContent='';T.typing=setInterval(()=>{i+=2;b.textContent=text.slice(0,i);if(i>=text.length)clearInterval(T.typing);},22);}
+  $('talkChoices').innerHTML=choices.map(([act,label,k,cls,data])=>`<button type="button" data-act="${act}" ${data||''} class="${cls||''}">${label}${k?`<span class="k">${k}</span>`:''}</button>`).join('');}
+function mainChoices(pid){const ls=lessonState(pid);const n=MC.npc[pid];const c=[];
+  if(ls.next&&!ls.doneToday)c.push(['tlesson',`<span class="new">●</span> Today’s lesson: ${esc(ls.next.t)}`,`${ls.next.min} min`]);
+  else c.push(['tlesson','Today’s lesson',ls.next?'tomorrow':'all read']);
+  c.push(['thow','How am I doing?']);
+  if(ls.past.length)c.push(['tpast','Lessons you’ve read',`${ls.past.length}`]);
+  c.push(['tbye','Farewell']);return c;}
+function openTalk(pid){const n=MC.npc[pid];if(!n)return;T.pid=pid;closeAll();setOpen(false);
+  const tk=$('talk');tk.querySelector('.tPortrait').src=`assets/npc-${pid}.webp`;$('talkName').textContent=n.name;$('talkTitle').textContent=n.title;
+  tk.hidden=false;talkSay(pickOne(n.hello),mainChoices(pid));setTimeout(()=>$('talkChoices').querySelector('button')?.focus({preventScroll:true}),60);}
+function closeTalk(){const tk=$('talk');if(tk.hidden)return;clearInterval(T.typing);tk.hidden=true;T.pid=null;syncNpc();$('npcFab').focus?.({preventScroll:true});}
+function talkBack(){if($('talk').classList.contains('reading'))talkSay(MC.npc[T.pid].offer,mainChoices(T.pid));else closeTalk();}
+function showLesson(l,isNew){const pid=T.pid;$('talk').classList.add('reading');clearInterval(T.typing);
+  $('talkBody').innerHTML=`<article class="lesson"><h3>${esc(l.t)}</h3><p class="meta">${PMAP[pid].name} · ${l.min} minute read</p>${l.body.map(p=>`<p>${esc(p)}</p>`).join('')}<div class="ask"><small>Try this</small>${esc(l.ask)}</div></article>`;
+  $('talkBody').scrollTop=0;
+  $('talkChoices').innerHTML=isNew?`<button type="button" class="pri" data-act="tdone" data-l="${l.id}">Done · +15 XP</button>`:`<button type="button" data-act="tback">Back</button>`;}
+const TALK_ACTS={
+  tlesson(){const pid=T.pid;const ls=lessonState(pid);const n=MC.npc[pid];
+    if(!ls.next)return talkSay(n.empty,mainChoices(pid));
+    if(ls.doneToday)return talkSay(n.done,mainChoices(pid));
+    showLesson(ls.next,true);},
+  thow(){talkSay(npcInsight(T.pid),mainChoices(T.pid));},
+  tpast(){const ls=lessonState(T.pid);talkSay('Which one shall we look at again?',[...ls.past.map(l=>['tread',esc(l.t),fmtDay(ls.read[l.id]),'',`data-l="${l.id}"`]),['tback','Back']]);},
+  tread(el){const l=findLesson(el.dataset.l);if(l)showLesson(l,false);},
+  tback(){talkSay(MC.npc[T.pid].offer,mainChoices(T.pid));},
+  tdone(el){const pid=T.pid;const id=el.dataset.l;if(S.profile.lessons?.[id])return;
+    saveProfile(p=>{p.lessons={...(p.lessons||{}),[id]:today()};});
+    log({id:'lesson',p:pid,xp:15},{lesson:id});
+    talkSay(`${pickOne(['Well read.','Good.','There. That will stay with you.'])} ${MC.npc[pid].done}`,mainChoices(pid));syncNpc();},
+  tbye(){if(!T.pid)return;const n=MC.npc[T.pid];if($('talk').classList.contains('reading')){talkBack();return;}
+    talkSay(pickOne(n.bye),[]);setTimeout(closeTalk,reduceMotion?400:1100);}
+};
+$('npcFab').addEventListener('click',()=>openTalk(S.loc));
+$('talkBody').addEventListener('click',()=>{if($('talk').classList.contains('reading'))return;clearInterval(T.typing);$('talkBody').textContent=T.full;});
+
 /* =================== hooks for the world =================== */
 window.HB={
-  show(v){$('sheet').classList.toggle('off',!v);$('logFab').classList.toggle('off',!v);if(!v){setOpen(false);closeAll();}placeFab();},
+  show(v){S.shown=v;$('sheet').classList.toggle('off',!v);$('logFab').classList.toggle('off',!v);syncNpc();if(!v){setOpen(false);closeAll();}placeFab();},
   open(name,arg){if(name==='room')return travel(arg);openView(name,arg);},
   expand(){setOpen(true);}
 };
