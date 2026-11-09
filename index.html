@@ -141,6 +141,14 @@ button.row{width:100%;text-align:left;color:var(--cream);font-size:15px;cursor:p
 label.f{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--mist)}
 input.in,select.in{font:500 16px var(--font-ui);color:var(--cream);background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;padding:11px 12px;width:100%;box-sizing:border-box;min-width:0}
 select.in option{color:#111}
+.bookRow{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto auto;align-items:center;gap:8px 8px}
+.bookRow .bb{grid-column:1/-1;display:flex;flex-direction:column;gap:5px}
+.bookRow .bb small{color:var(--mist);font-size:12.5px}
+.bookRow .bt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bookRow .pg{display:flex;align-items:center;gap:5px;color:var(--mist);font-size:13px;font-variant-numeric:tabular-nums;flex:0 0 auto}
+.bookRow .pg .in{width:62px;padding:8px 6px;text-align:center}
+.bookRow .ok{flex:0 0 auto;width:36px;height:36px;border-radius:50%;border:1px solid #b3a6ea;background:#b3a6ea26;color:#d9d1ff;font-size:16px;cursor:pointer}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .note{font-size:13px;color:var(--mist);line-height:1.45}
 
@@ -923,8 +931,10 @@ function roomBody(pid,st){const p=PMAP[pid];const tabs=ROOM_TABS[pid];const cur=
 function bookRead(b,all){return (b.start||0)+all.filter(e=>e.book===b.id).reduce((a,e)=>a+(+e.q||0),0);}
 function bookXp(n){return 10+Math.min(20,Math.floor(n/10)*2);}
 function bookRow(b,all){const read=bookRead(b,all);const frac=b.pages?Math.min(1,read/b.pages):0;const done=b.pages&&read>=b.pages;
-  return`<div class="row" style="flex-direction:column;align-items:stretch;gap:8px"><div style="display:flex;gap:10px;align-items:center"><span class="grow"><span>${esc(b.title)}</span><small>${done?'Finished':`Page ${read}${b.pages?` of ${b.pages}`:''}`}${b.pages&&!done?` · ${Math.round(frac*100)}%`:''}</small>${b.pages?bar(frac,'#b3a6ea'):''}</span><button class="x" type="button" data-act="delbook" data-b="${b.id}" aria-label="Remove ${esc(b.title)}">×</button></div>
-    ${done?'':`<form class="pgForm" data-b="${b.id}" style="display:flex;gap:8px"><input class="in" type="number" inputmode="numeric" min="0" ${b.pages?`max="${b.pages}"`:''} placeholder="I'm on page…" aria-label="Page you're on in ${esc(b.title)}" style="flex:1;min-width:0"><button class="ghost" type="submit">Update</button></form>`}</div>`;}
+  return`<form class="row bookRow pgForm" data-b="${b.id}"><span class="bt">${esc(b.title)}</span>
+    <label class="pg"><span class="vh">Page you're on in ${esc(b.title)}</span><input class="in" type="number" inputmode="numeric" min="0" ${b.pages?`max="${b.pages}"`:''} value="${read}" ${done?'disabled':''}>${b.pages?`<span>/ ${b.pages}</span>`:''}</label>
+    ${done?'<span></span>':`<button class="ok" type="submit" aria-label="Save page for ${esc(b.title)}">✓</button>`}<button class="x" type="button" data-act="delbook" data-b="${b.id}" aria-label="Remove ${esc(b.title)}">×</button>
+    <span class="bb">${b.pages?bar(frac,done?'#ffd96b':'#b3a6ea'):''}<small>${done?'Finished':b.pages?`${Math.round(frac*100)}% · ${b.pages-read} pages to go`:'No page count set'}</small></span></form>`;}
 function updatePage(bid,n){const b=S.profile.books.find(x=>x.id===bid);if(!b||!(n>=0))return;const all=entries();const cur=bookRead(b,all);
   if(b.pages)n=Math.min(n,b.pages);
   if(n===cur){toast(`Already on page ${cur}`,null);return;}
@@ -1030,7 +1040,7 @@ function roomTools(pid,st){
         return`<div class="row"><span class="ico" style="background:${lit?'#ffcf7a33':'#ffffff10'};color:${lit?'#ffcf7a':'#8a8f88'}">${ICON.flame}</span><button type="button" class="grow" style="background:none;border:0;color:inherit;text-align:left;padding:0;cursor:pointer" data-act="reachout" data-person="${x.id}"><span>${esc(x.name)}</span><small>${x.last?`Last connected ${daysAgo(x.last.d)}`:'Not yet this season'}</small></button><button class="x" type="button" data-act="delperson" data-person="${x.id}" aria-label="Remove ${esc(x.name)}">×</button></div>`;}).join(''):'<div class="empty">Add the people you want to stay close to. Each gets a lantern that dims when you go quiet.</div>'}
       <form id="personForm" class="row"><input class="in" id="personIn" type="text" maxlength="40" placeholder="Add a name" aria-label="Add a person"><button class="ghost" type="submit">Add</button></form></div>`;}
   if(pid==='lore'){const all=st.all;
-    return`<div class="sec"><h3>Bookshelf</h3><p class="sub">Enter the page you're on. Every time it goes up, it counts as reading.</p>${S.profile.books.length?S.profile.books.map(b=>bookRow(b,all)).join(''):'<div class="empty">Add what you are reading to track pages toward the end.</div>'}
+    return`<div class="sec"><h3>Bookshelf</h3><p class="sub">Change the page number and tap ✓. Every time it goes up, it counts as reading.</p>${S.profile.books.length?S.profile.books.map(b=>bookRow(b,all)).join(''):'<div class="empty">Add what you are reading to track pages toward the end.</div>'}
       <form id="bookForm" class="formgrid"><input class="in" id="bookTitle" type="text" maxlength="60" placeholder="Book title" aria-label="Book title" style="grid-column:1/-1"><input class="in" id="bookPages" type="number" inputmode="numeric" min="0" placeholder="Total pages" aria-label="Total pages"><input class="in" id="bookStart" type="number" inputmode="numeric" min="0" placeholder="Pages read so far" aria-label="Pages read so far"><button class="ghost" type="submit" style="grid-column:1/-1">Add book</button></form></div>`;}
   if(pid==='discipline'){const td=today();const dailies=S.profile.habits.filter(h=>h.daily);const days=[...Array(7)].map((_,i)=>dstr(addDays(w.mon,i)));
     return`<div class="sec"><h3>This week</h3>${dailies.length?dailies.map(h=>{const done=days.map(d=>st.all.some(e=>e.h===h.id&&e.d===d));
