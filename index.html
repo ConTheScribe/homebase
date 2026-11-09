@@ -141,6 +141,9 @@ button.row{width:100%;text-align:left;color:var(--cream);font-size:15px;cursor:p
 label.f{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--mist)}
 input.in,select.in{font:500 16px var(--font-ui);color:var(--cream);background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;padding:11px 12px;width:100%;box-sizing:border-box;min-width:0}
 select.in option{color:#111}
+.linkbtn{align-self:flex-start;background:none;border:0;padding:2px 0;color:var(--mist);font:500 12.5px var(--font-ui);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.linkbtn:hover{color:var(--cream)}
+.ghost.sm{padding:7px 10px;font-size:12.5px}
 .bookRow{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto auto;align-items:center;gap:8px 8px}
 .bookRow .bb{grid-column:1/-1;display:flex;flex-direction:column;gap:5px}
 .bookRow .bb small{color:var(--mist);font-size:12.5px}
@@ -747,11 +750,12 @@ function log(h,extra={}){
 }
 function removeEntry(e){if(e.lesson&&S.profile.lessons?.[e.lesson])saveProfile(p=>{delete p.lessons[e.lesson];});const w=weekOf(parseD(e.d));store.write(w.id,{entries:weekEntries(w.id).filter(x=>x.id!==e.id)});toast('Entry removed',null);}
 function saveProfile(mut){const p=JSON.parse(JSON.stringify(S.profile));mut(p);store.write('profile',p);}
-function entryText(e){if(e.h==='lesson'){const l=findLesson(e.lesson);return 'Lesson · '+(l?l.t:'read');}const h=habit(e.h);let s=h?h.label:'Removed habit';
+function entryText(e){if(e.h==='projdone'){const x=(S.profile.projects||[]).find(y=>y.id===e.proj);return 'Finished · '+(x?x.name:'a project');}if(e.h==='lesson'){const l=findLesson(e.lesson);return 'Lesson · '+(l?l.t:'read');}const h=habit(e.h);let s=h?h.label:'Removed habit';
   if(e.amt)s+=` · ${money(e.amt)}`;if(e.cat)s+=` · ${e.cat}`;
   if(e.q&&h?.unit)s+=` · ${e.q} ${h.unit==='min'?'min':h.unit}`;
   if(e.person){const pp=S.profile.people.find(x=>x.id===e.person);if(pp)s+=` · ${pp.name}`;}
   if(e.book){const b=S.profile.books.find(x=>x.id===e.book);if(b)s+=` · ${b.title}`;}
+  if(e.proj){const x=(S.profile.projects||[]).find(y=>y.id===e.proj);if(x)s+=` · ${x.name}`;}
   if(e.goal){const g=(S.profile.goals||[]).find(x=>x.id===e.goal);if(g)s+=` · ${g.name}`;}
   if(e.acct){const a=(S.profile.invest?.accounts||[]).find(x=>x.id===e.acct);if(a)s+=` · ${a.name}`;}
   if(e.note)s+=` · ${e.note}`;return s;}
@@ -894,6 +898,7 @@ VIEWS.entry=hid=>{const h=habit(hid);const p=PMAP[h.p];let f='';
   if(h.kind==='expense')f+=`<label class="f">Amount (R)<input class="in" id="fAmt" type="number" inputmode="decimal" min="0" step="1" placeholder="e.g. 180"></label>
     <div class="f" style="display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--mist)">Category<div class="chips" id="fCats">${CATS.map((c,i)=>`<button type="button" class="chip" data-act="pickcat" data-c="${c}" aria-pressed="${i===0}">${c}</button>`).join('')}</div></div>`;
   if(h.kind==='person')f+=S.profile.people.length?`<label class="f">Who<select class="in" id="fPerson">${S.profile.people.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select></label>`:`<label class="f">Who (adds them to your Bonds)<input class="in" id="fNewPerson" type="text" maxlength="40" placeholder="Name"></label>`;
+  if(h.p==='craft'&&(S.profile.projects||[]).some(x=>!x.done))f+=`<label class="f">Project<select class="in" id="fProj"><option value="">No project</option>${S.profile.projects.filter(x=>!x.done).map(x=>`<option value="${x.id}" ${x.h===h.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>`;
   if(h.kind==='book')f+=S.profile.books.length?`<label class="f">Book<select class="in" id="fBook">${S.profile.books.map(x=>`<option value="${x.id}">${esc(x.title)}</option>`).join('')}<option value="">Something else</option></select></label>`:'';
   if(h.unit)f+=`<label class="f">${UNITS[h.unit]}<input class="in" id="fQty" type="number" inputmode="numeric" min="0" step="1" placeholder="${h.unit==='min'?'e.g. 30':h.unit==='pages'?'e.g. 25':'e.g. 15'}"></label>`;
   f+=`<label class="f">Note (optional)<input class="in" id="fNote" type="text" maxlength="80"></label>
@@ -904,6 +909,7 @@ VIEWS.entry=hid=>{const h=habit(hid);const p=PMAP[h.p];let f='';
         if(h.kind==='expense'){const a=parseFloat($('fAmt').value);if(!(a>0)){err.textContent='Enter the amount you spent.';err.hidden=false;return;}extra.amt=a;extra.cat=$('panel').querySelector('#fCats [aria-pressed="true"]')?.dataset.c||'Other';}
         if(h.kind==='person'){if($('fPerson'))extra.person=$('fPerson').value;else{const n=$('fNewPerson').value.trim();if(!n){err.textContent='Add who you connected with.';err.hidden=false;return;}const pid=uid();saveProfile(p=>p.people.push({id:pid,name:n}));extra.person=pid;}}
         if(h.kind==='book'&&$('fBook')&&$('fBook').value)extra.book=$('fBook').value;
+        if($('fProj')&&$('fProj').value)extra.proj=$('fProj').value;
         if(h.unit){const q=parseFloat($('fQty').value);if(!(q>0)){err.textContent=`Enter the ${UNITS[h.unit].toLowerCase()}.`;err.hidden=false;return;}extra.q=q;}
         const n=$('fNote').value.trim();if(n)extra.note=n;extra.d=$('fDay').value;
         log(h,extra);back();});}};
@@ -911,21 +917,43 @@ VIEWS.entry=hid=>{const h=habit(hid);const p=PMAP[h.p];let f='';
 
 const ROOM_TABS={wealth:[['overview','Overview'],['spending','Spending'],['goals','Goals'],['investing','Investing']],
   discipline:[['overview','Overview'],['tools','Rites']],vitality:[['overview','Overview'],['tools','Training']],
-  bonds:[['overview','Overview'],['tools','Lanterns']],craft:[['overview','Overview'],['tools','Sessions']],lore:[['overview','Overview'],['tools','Bookshelf']]};
+  bonds:[['overview','Overview'],['tools','Lanterns']],craft:[['overview','Overview'],['projects','Projects'],['tools','Sessions']],lore:[['overview','Overview'],['tools','Bookshelf']]};
 function roomBody(pid,st){const p=PMAP[pid];const tabs=ROOM_TABS[pid];const cur=S.rtab[pid]||'overview';
   const bar_=`<div class="rtabs" role="tablist">${tabs.map(([k,n])=>`<button type="button" role="tab" data-act="rtab" data-t="${k}" aria-selected="${k===cur}">${n}</button>`).join('')}</div>`;
   let body='';
   if(cur==='overview'){const recent=st.all.filter(e=>e.p===pid).slice(0,8);
     body=`<div class="sec"><p class="sub" style="margin:0">${p.blurb}</p></div>${xpPanel(st.all.filter(e=>e.p===pid),p.c,pid)}
     ${pid==='lore'?(()=>{const rn=(S.profile.books||[]).filter(b=>!(b.pages&&bookRead(b,st.all)>=b.pages));return rn.length?`<div class="sec"><h3>Reading now</h3>${rn.map(b=>bookRow(b,st.all)).join('')}</div>`:'';})():''}
+    ${pid==='craft'?(()=>{const on=(S.profile.projects||[]).filter(x=>!x.done);return on.length?`<div class="sec"><h3>Working on</h3>${on.map(x=>projRow(x,st.all)).join('')}</div>`:'';})():''}
     <div class="sec"><h3>Log</h3>${habitGrid(pid)}</div>
     <div class="sec"><h3>Recent</h3>${recent.length?recent.map(e=>rowEntry(e,true)).join(''):'<div class="empty">Nothing logged on this path yet.</div>'}</div>
     <div class="sec"><div class="actions"><button class="ghost" type="button" data-act="habits" data-p="${pid}">Manage habits</button></div></div>`;}
   else if(cur==='goals')body=goalsTab(st);
+  else if(cur==='projects')body=projectsTab(st);
   else if(cur==='investing')body=investTab(st);
   else body=roomTools(pid,st)||'<div class="empty">Nothing to show here yet.</div>';
   return bar_+body;}
 
+
+
+/* ---- craft projects ---- */
+function projStats(x,all){const es=all.filter(e=>e.proj===x.id);return{min:es.reduce((a,e)=>a+(+e.q||0),0),n:es.length,last:es[0]?.d};}
+function hrs(m){const h=m/60;return h<10?(Math.round(h*10)/10)+'':Math.round(h)+'';}
+function projRow(x,all){const ps=projStats(x,all);const h=habit(x.h);const frac=x.target?Math.min(1,ps.min/60/x.target):0;
+  const meta=[x.target?`${hrs(ps.min)} of ${x.target} hours`:`${hrs(ps.min)} hours`,`${ps.n} session${ps.n===1?'':'s'}`,h?h.label:null,ps.last?`last ${fmtDay(ps.last)}`:null].filter(Boolean).join(' · ');
+  if(x.done)return`<div class="row bookRow"><span class="bt">${esc(x.name)}</span><span></span><button class="ghost sm" type="button" data-act="projreopen" data-x="${x.id}">Reopen</button><button class="x" type="button" data-act="delproj" data-x="${x.id}" aria-label="Remove ${esc(x.name)}">×</button><span class="bb">${bar(1,'#ffd96b')}<small>Finished ${fmtDay(x.done)} · ${meta}</small></span></div>`;
+  return`<form class="row bookRow projForm" data-x="${x.id}"><span class="bt">${esc(x.name)}</span>
+    <label class="pg"><span class="vh">Minutes worked on ${esc(x.name)}</span><input class="in" type="number" inputmode="numeric" min="1" placeholder="min"><span>min</span></label>
+    <button class="ok" type="submit" aria-label="Log a session on ${esc(x.name)}">✓</button><button class="x" type="button" data-act="delproj" data-x="${x.id}" aria-label="Remove ${esc(x.name)}">×</button>
+    <span class="bb">${x.target?bar(frac,PMAP.craft.c):''}<small>${meta}</small><button class="linkbtn" type="button" data-act="projdone" data-x="${x.id}">Mark finished · +40 XP</button></span></form>`;}
+function projectsTab(st){const ps=S.profile.projects||[];const on=ps.filter(x=>!x.done),done=ps.filter(x=>x.done);const ch=S.profile.habits.filter(h=>h.p==='craft');
+  return`<div class="sec"><h3>Projects</h3><p class="sub">Type how many minutes you worked and tap ✓. Each one logs a session.</p>${on.length?on.map(x=>projRow(x,st.all)).join(''):'<div class="empty">Add something you are making: a table, a song, a hoop.</div>'}
+    <form id="projAdd" class="formgrid"><input class="in" id="pjName" type="text" maxlength="60" placeholder="Project name" aria-label="Project name" style="grid-column:1/-1">
+      <select class="in" id="pjH" aria-label="Kind of session">${ch.map(h=>`<option value="${h.id}">${esc(h.label)}</option>`).join('')}</select>
+      <input class="in" id="pjT" type="number" inputmode="decimal" min="0" step="0.5" placeholder="Target hours" aria-label="Target hours">
+      <button class="ghost" type="submit" style="grid-column:1/-1">Add project</button></form></div>
+    ${done.length?`<div class="sec"><h3>Finished</h3>${done.map(x=>projRow(x,st.all)).join('')}</div>`:''}`;}
+function logProj(xid,m){const x=(S.profile.projects||[]).find(y=>y.id===xid);if(!x||!(m>0))return;const h=habit(x.h)||S.profile.habits.find(h=>h.p==='craft')||{id:'wood',p:'craft',label:'Workshop session',xp:20};log(h,{q:m,proj:xid});}
 
 /* ---- books: track the page you're on ---- */
 function bookRead(b,all){return (b.start||0)+all.filter(e=>e.book===b.id).reduce((a,e)=>a+(+e.q||0),0);}
@@ -1126,6 +1154,10 @@ function onAct(el){const a=el.dataset.act;
   if(a==='pickcat'){el.parentElement.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',String(c===el)));return;}
   if(a==='reachout'){const h=habit('reach');if(h)log(h,{person:el.dataset.person});return;}
   if(a==='delperson'){saveProfile(p=>p.people=p.people.filter(x=>x.id!==el.dataset.person));return;}
+  if(a==='delproj'){saveProfile(p=>p.projects=(p.projects||[]).filter(x=>x.id!==el.dataset.x));return;}
+  if(a==='projreopen'){saveProfile(p=>{const x=p.projects.find(y=>y.id===el.dataset.x);if(x)delete x.done;});return;}
+  if(a==='projdone'){const x=(S.profile.projects||[]).find(y=>y.id===el.dataset.x);if(!x)return;saveProfile(p=>{p.projects.find(y=>y.id===x.id).done=today();});
+    log({id:'projdone',p:'craft',label:'Finished a project',xp:40},{proj:x.id});setTimeout(()=>window.HB_ENGINE?.levelUp(),300);return;}
   if(a==='delbook'){saveProfile(p=>p.books=p.books.filter(x=>x.id!==el.dataset.b));return;}
   if(a==='delhabit'){saveProfile(p=>p.habits=p.habits.filter(x=>x.id!==el.dataset.h));return;}
   if(a==='toggledaily'){saveProfile(p=>{const h=p.habits.find(x=>x.id===el.dataset.h);if(h)h.daily=!h.daily;});return;}
@@ -1138,6 +1170,8 @@ document.addEventListener('submit',ev=>{const f=ev.target;
     const g={id:uid(),name:n,target:t,start:Math.max(0,parseFloat($('gStart').value)||0)};if($('gDate').value)g.date=$('gDate').value;document.activeElement&&document.activeElement.blur();saveProfile(p=>{p.goals=[...(p.goals||[]),g];});toast(`Goal added: ${n}`,null);return;}
   if(f.id==='acctForm'){ev.preventDefault();const n=$('aName').value.trim();if(!n){$('aErr').textContent='Give the account a name.';$('aErr').hidden=false;return;}
     const a={id:uid(),name:n,type:$('aType').value,value:Math.max(0,parseFloat($('aVal').value)||0),upd:today()};document.activeElement&&document.activeElement.blur();saveProfile(p=>{p.invest=p.invest||{accounts:[],snaps:[]};p.invest.accounts.push(a);snapTotal(p);});toast(`Added ${n}`,null);return;}
+if(f.classList.contains('projForm')){ev.preventDefault();const v=parseFloat(f.querySelector('input').value);document.activeElement&&document.activeElement.blur();if(!(v>0))return;logProj(f.dataset.x,v);return;}
+if(f.id==='projAdd'){ev.preventDefault();const n=$('pjName').value.trim();if(!n)return;const t=Math.max(0,parseFloat($('pjT').value)||0);document.activeElement&&document.activeElement.blur();saveProfile(p=>{p.projects=[...(p.projects||[]),{id:uid(),name:n,h:$('pjH').value,target:t,start:today()}];});toast(`Project added: ${n}`,null);return;}
 if(f.classList.contains('pgForm')){ev.preventDefault();const v=parseInt(f.querySelector('input').value);document.activeElement&&document.activeElement.blur();if(!(v>=0))return;updatePage(f.dataset.b,v);return;}
 if(['capForm','personForm','bookForm'].includes(f.id)&&document.activeElement)document.activeElement.blur();
   if(f.id==='capForm'){ev.preventDefault();const v=Math.max(0,parseFloat($('capIn').value)||0);saveProfile(p=>p.cap=v);toast(`Weekly cap set to ${money(v)}`,null);}
