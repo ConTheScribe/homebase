@@ -909,6 +909,7 @@ function roomBody(pid,st){const p=PMAP[pid];const tabs=ROOM_TABS[pid];const cur=
   let body='';
   if(cur==='overview'){const recent=st.all.filter(e=>e.p===pid).slice(0,8);
     body=`<div class="sec"><p class="sub" style="margin:0">${p.blurb}</p></div>${xpPanel(st.all.filter(e=>e.p===pid),p.c,pid)}
+    ${pid==='lore'?(()=>{const rn=(S.profile.books||[]).filter(b=>!(b.pages&&bookRead(b,st.all)>=b.pages));return rn.length?`<div class="sec"><h3>Reading now</h3>${rn.map(b=>bookRow(b,st.all)).join('')}</div>`:'';})():''}
     <div class="sec"><h3>Log</h3>${habitGrid(pid)}</div>
     <div class="sec"><h3>Recent</h3>${recent.length?recent.map(e=>rowEntry(e,true)).join(''):'<div class="empty">Nothing logged on this path yet.</div>'}</div>
     <div class="sec"><div class="actions"><button class="ghost" type="button" data-act="habits" data-p="${pid}">Manage habits</button></div></div>`;}
@@ -917,6 +918,21 @@ function roomBody(pid,st){const p=PMAP[pid];const tabs=ROOM_TABS[pid];const cur=
   else body=roomTools(pid,st)||'<div class="empty">Nothing to show here yet.</div>';
   return bar_+body;}
 
+
+/* ---- books: track the page you're on ---- */
+function bookRead(b,all){return (b.start||0)+all.filter(e=>e.book===b.id).reduce((a,e)=>a+(+e.q||0),0);}
+function bookXp(n){return 10+Math.min(20,Math.floor(n/10)*2);}
+function bookRow(b,all){const read=bookRead(b,all);const frac=b.pages?Math.min(1,read/b.pages):0;const done=b.pages&&read>=b.pages;
+  return`<div class="row" style="flex-direction:column;align-items:stretch;gap:8px"><div style="display:flex;gap:10px;align-items:center"><span class="grow"><span>${esc(b.title)}</span><small>${done?'Finished':`Page ${read}${b.pages?` of ${b.pages}`:''}`}${b.pages&&!done?` · ${Math.round(frac*100)}%`:''}</small>${b.pages?bar(frac,'#b3a6ea'):''}</span><button class="x" type="button" data-act="delbook" data-b="${b.id}" aria-label="Remove ${esc(b.title)}">×</button></div>
+    ${done?'':`<form class="pgForm" data-b="${b.id}" style="display:flex;gap:8px"><input class="in" type="number" inputmode="numeric" min="0" ${b.pages?`max="${b.pages}"`:''} placeholder="I'm on page…" aria-label="Page you're on in ${esc(b.title)}" style="flex:1;min-width:0"><button class="ghost" type="submit">Update</button></form>`}</div>`;}
+function updatePage(bid,n){const b=S.profile.books.find(x=>x.id===bid);if(!b||!(n>=0))return;const all=entries();const cur=bookRead(b,all);
+  if(b.pages)n=Math.min(n,b.pages);
+  if(n===cur){toast(`Already on page ${cur}`,null);return;}
+  if(n<cur){const logged=cur-(b.start||0);if(n<logged){toast(`You've logged ${logged} pages of this book. Remove a reading entry to go lower.`,null);return;}
+    saveProfile(p=>{const x=p.books.find(y=>y.id===bid);x.start=n-logged;});toast(`Moved back to page ${n}`,null);return;}
+  const diff=n-cur;const fin=b.pages&&n>=b.pages;const base=habit('read')||{id:'read',p:'lore',label:'Read',xp:10};
+  log({...base,xp:bookXp(diff)+(fin?25:0)},{book:bid,q:diff});
+  if(fin)setTimeout(()=>{toast(`You finished ${b.title}. +25 XP. Pip is delighted.`,null);window.HB_ENGINE?.levelUp();},1600);}
 /* ---- XP graph ---- */
 function pathStreak(list){const days=new Set(list.map(e=>e.d));let d=new Date();if(!days.has(dstr(d)))d=addDays(d,-1);let n=0;while(days.has(dstr(d))){n++;d=addDays(d,-1);}return n;}
 function buckets(list,range){const now=new Date();const out=[];
@@ -1014,9 +1030,8 @@ function roomTools(pid,st){
         return`<div class="row"><span class="ico" style="background:${lit?'#ffcf7a33':'#ffffff10'};color:${lit?'#ffcf7a':'#8a8f88'}">${ICON.flame}</span><button type="button" class="grow" style="background:none;border:0;color:inherit;text-align:left;padding:0;cursor:pointer" data-act="reachout" data-person="${x.id}"><span>${esc(x.name)}</span><small>${x.last?`Last connected ${daysAgo(x.last.d)}`:'Not yet this season'}</small></button><button class="x" type="button" data-act="delperson" data-person="${x.id}" aria-label="Remove ${esc(x.name)}">×</button></div>`;}).join(''):'<div class="empty">Add the people you want to stay close to. Each gets a lantern that dims when you go quiet.</div>'}
       <form id="personForm" class="row"><input class="in" id="personIn" type="text" maxlength="40" placeholder="Add a name" aria-label="Add a person"><button class="ghost" type="submit">Add</button></form></div>`;}
   if(pid==='lore'){const all=st.all;
-    return`<div class="sec"><h3>Bookshelf</h3>${S.profile.books.length?S.profile.books.map(b=>{const read=all.filter(e=>e.book===b.id).reduce((a,e)=>a+(+e.q||0),0);const frac=b.pages?Math.min(1,read/b.pages):0;
-      return`<div class="row"><span class="grow"><span>${esc(b.title)}</span><small>${read}${b.pages?` of ${b.pages}`:''} pages${frac>=1?' · finished':''}</small>${b.pages?bar(frac,'#b3a6ea'):''}</span><button class="x" type="button" data-act="delbook" data-b="${b.id}" aria-label="Remove ${esc(b.title)}">×</button></div>`;}).join(''):'<div class="empty">Add what you are reading to track pages toward the end.</div>'}
-      <form id="bookForm" class="formgrid"><input class="in" id="bookTitle" type="text" maxlength="60" placeholder="Book title" aria-label="Book title"><input class="in" id="bookPages" type="number" inputmode="numeric" min="0" placeholder="Total pages" aria-label="Total pages"><button class="ghost" type="submit" style="grid-column:1/-1">Add book</button></form></div>`;}
+    return`<div class="sec"><h3>Bookshelf</h3><p class="sub">Enter the page you're on. Every time it goes up, it counts as reading.</p>${S.profile.books.length?S.profile.books.map(b=>bookRow(b,all)).join(''):'<div class="empty">Add what you are reading to track pages toward the end.</div>'}
+      <form id="bookForm" class="formgrid"><input class="in" id="bookTitle" type="text" maxlength="60" placeholder="Book title" aria-label="Book title" style="grid-column:1/-1"><input class="in" id="bookPages" type="number" inputmode="numeric" min="0" placeholder="Total pages" aria-label="Total pages"><input class="in" id="bookStart" type="number" inputmode="numeric" min="0" placeholder="Pages read so far" aria-label="Pages read so far"><button class="ghost" type="submit" style="grid-column:1/-1">Add book</button></form></div>`;}
   if(pid==='discipline'){const td=today();const dailies=S.profile.habits.filter(h=>h.daily);const days=[...Array(7)].map((_,i)=>dstr(addDays(w.mon,i)));
     return`<div class="sec"><h3>This week</h3>${dailies.length?dailies.map(h=>{const done=days.map(d=>st.all.some(e=>e.h===h.id&&e.d===d));
       return`<div class="row"><span class="grow"><span>${esc(h.label)}</span><span style="display:flex;gap:5px">${done.map((v,i)=>`<span title="${fmtDay(days[i])}" style="width:16px;height:16px;border-radius:4px;${v?'background:#a9c3d4':'border:1.5px dashed rgba(251,242,226,.35)'};${days[i]===td?'outline:1.5px solid var(--cream);outline-offset:1px':''}"></span>`).join('')}</span></span><span class="num">${done.filter(Boolean).length}/7</span></div>`;}).join(''):'<div class="empty">Mark habits as daily to see them as a weekly grid.</div>'}</div>`;}
@@ -1113,10 +1128,11 @@ document.addEventListener('submit',ev=>{const f=ev.target;
     const g={id:uid(),name:n,target:t,start:Math.max(0,parseFloat($('gStart').value)||0)};if($('gDate').value)g.date=$('gDate').value;document.activeElement&&document.activeElement.blur();saveProfile(p=>{p.goals=[...(p.goals||[]),g];});toast(`Goal added: ${n}`,null);return;}
   if(f.id==='acctForm'){ev.preventDefault();const n=$('aName').value.trim();if(!n){$('aErr').textContent='Give the account a name.';$('aErr').hidden=false;return;}
     const a={id:uid(),name:n,type:$('aType').value,value:Math.max(0,parseFloat($('aVal').value)||0),upd:today()};document.activeElement&&document.activeElement.blur();saveProfile(p=>{p.invest=p.invest||{accounts:[],snaps:[]};p.invest.accounts.push(a);snapTotal(p);});toast(`Added ${n}`,null);return;}
+if(f.classList.contains('pgForm')){ev.preventDefault();const v=parseInt(f.querySelector('input').value);document.activeElement&&document.activeElement.blur();if(!(v>=0))return;updatePage(f.dataset.b,v);return;}
 if(['capForm','personForm','bookForm'].includes(f.id)&&document.activeElement)document.activeElement.blur();
   if(f.id==='capForm'){ev.preventDefault();const v=Math.max(0,parseFloat($('capIn').value)||0);saveProfile(p=>p.cap=v);toast(`Weekly cap set to ${money(v)}`,null);}
   if(f.id==='personForm'){ev.preventDefault();const n=$('personIn').value.trim();if(!n)return;saveProfile(p=>p.people.push({id:uid(),name:n}));}
-  if(f.id==='bookForm'){ev.preventDefault();const t=$('bookTitle').value.trim();if(!t)return;const pg=parseInt($('bookPages').value)||0;saveProfile(p=>p.books.push({id:uid(),title:t,pages:pg}));}
+  if(f.id==='bookForm'){ev.preventDefault();const t=$('bookTitle').value.trim();if(!t)return;const pg=parseInt($('bookPages').value)||0;let st0=Math.max(0,parseInt($('bookStart').value)||0);if(pg)st0=Math.min(st0,pg);saveProfile(p=>p.books.push({id:uid(),title:t,pages:pg,start:st0}));toast(`Added ${t}${st0?`, on page ${st0}`:''}`,null);}
 });
 document.addEventListener('keydown',ev=>{if(ev.key!=='Escape')return;if(!$('talk').hidden){ev.preventDefault();talkBack();return;}if(S.stack.length){ev.preventDefault();back();}else if(S.open){setOpen(false);}else if(S.loc!=='home'){travel('home');}});
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{S.tab=b.dataset.tab;renderSheet();$('sheetBody').scrollTop=0;}));
@@ -1158,8 +1174,8 @@ function npcInsight(pid){const st=stats();const n=MC.npc[pid];const mine=st.all.
       a=o.g>=14?`${esc(o.p.name)}'s lantern is burning low${o.g<999?`. It has been ${o.g} days`:', it has never been lit'}. Maybe today?`:'Every lantern on the bridges is lit. That is rare. Well done.';}
     else a='No lanterns hang here yet. Add the people who matter in the Lanterns tab.';}
   else if(pid==='craft'){a=wk?`${wk} session${wk>1?'s':''} at the bench this week.`:'The bench has been quiet this week. Ten minutes is enough to wake it.';}
-  else if(pid==='lore'){const bs=(S.profile.books||[]);const cur=bs.find(b=>!b.pages||(b.read||0)<b.pages);const ls=lessonState('lore');
-    a=cur?`You are reading ${esc(cur.title)}. Pip approves.`:'No book on your shelf yet. Add one in the Bookshelf tab.';if(ls.past.length)a+=` You have read ${ls.past.length} of my pages.`;}
+  else if(pid==='lore'){const bs=(S.profile.books||[]);const st2=stats();const cur=bs.find(b=>!b.pages||bookRead(b,st2.all)<b.pages);const ls=lessonState('lore');
+    a=cur?`You are on page ${bookRead(cur,st2.all)} of ${esc(cur.title)}. Pip approves.`:'No book on your shelf yet. Add one in the Bookshelf tab.';if(ls.past.length)a+=` You have read ${ls.past.length} of my pages.`;}
   const g=gap===null?'We have not met properly yet. Log something here and I will remember.':gap===0?(sk>1?`You are ${sk} days running on this path.`:'You were here today already.'):gap===1?'You were here yesterday.':`It has been ${gap} days since you last came this way.`;
   return `${g} ${a} This path is at level ${lv}.`.replace(/\s+/g,' ').trim();}
 function talkSay(text,choices){clearInterval(T.typing);const b=$('talkBody');T.full=text;$('talk').classList.remove('reading');
